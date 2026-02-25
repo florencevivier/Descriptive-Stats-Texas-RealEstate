@@ -1,0 +1,532 @@
+---
+title: "Descriptive Statistics Project: Texas Real estate market analysis"
+author: "Florence Vivier"
+date: "2025-01-18"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+## 1. Variables analysis
+
+In the dataset 8 variables are present. For each, we precise their type, and the possible analysis: </br>
+
+* city: qualitative variable on nominal scale </br> 
+
+* year: continue quantitative variable </br> 
+
+* month: qualitative variable on nominal scale </br> 
+
+* sales: discrete quantitative variable. Position indexes: quantiles, mean; variability indexes: interquartile, variance </br>
+
+* volume: continue quantitative variable on report scale. Position indexes: quantiles, mean ;
+variability indexes: interquartile, variance </br> 
+
+* median_price: continue quantitative variable on report scale. Position indexes: quantiles, mean ; variability indexes: interquartile, variance </br>
+
+* listings: discrete quantitative variable. Position indexes: quantiles, mean ;
+variability indexes: interquartile, variance </br> 
+
+* months_inventory: continue quantitative variable on report scale. Position indexes: quantiles, mean ; variability indexes: interquartile, variance </br> 
+
+About variables related to time (year and month), it would be relevant to consider a new variable date, in format year_month, which would be qualitative with natural order. 
+
+
+## 2. Position, variability and shape indexes 
+
+#### Position indexes
+
+They are calculated through summary() function. </br> 
+With a view to greater clarity and concision, data are presented on a recapitulative table.
+
+```{r}
+data <- read.csv("Real Estate Texas.csv", sep=",")
+attach(data)
+sum_sales <- summary(sales)
+sum_volume <- summary(volume)
+sum_median_price <- summary(median_price)
+sum_listings <- summary(listings)
+sum_months_inventory <- summary(months_inventory)
+
+# Creation of a matrix of position indexes
+
+dec_2 <- function(x){
+  return (round(x, digits = 2))
+}
+
+matrix_pos_index <- matrix(nrow = 5, ncol = 6, byrow=F)
+
+for (j in 1:6) {
+  matrix_pos_index[,j] <- c(dec_2(sum_sales[j]), dec_2(sum_volume[j]), dec_2(sum_median_price[j]), dec_2(sum_listings[j]), dec_2(sum_months_inventory[j]))
+  }
+
+library(DT) 
+datatable(matrix_pos_index, 
+  colnames = c("Min", "1st. Quart", "Median", "Mean", "3rd Quart", "Max"),
+  rownames = c("sales", "volume", "median_price", "listings", "months_inventory")
+)
+```
+
+We note that observations are related to monthly data. </br>
+A mean number of 192 sales have been observed, corresponding to a mean value of 31 million dollars. The mean number of active listings is 1738, while a measure of the listings efficacy corresponding to month_inventory variable presents a mean value of 9 months.
+
+
+#### Variability indexes
+
+Interquartile range, standard deviation and variation coefficient (CV) are calculated using IQR(), sd() and a created CV function.  </br> 
+Data are presented on a recapitulative table.
+
+```{r}
+IQR_sales <- dec_2(IQR(sales))
+IQR_volume <- dec_2(IQR(volume))
+IQR_median_price <- dec_2(IQR(median_price))
+IQR_listings <- dec_2(IQR(listings))
+IQR_months_inventory <- dec_2(IQR(months_inventory))
+
+sd_sales <- dec_2(sd(sales))
+sd_volume <- dec_2(sd(volume))
+sd_median_price <- dec_2(sd(median_price))
+sd_listings <- dec_2(sd(listings))
+sd_months_inventory <- dec_2(sd(months_inventory))
+
+
+CV <- function(x){
+  return (sd(x)/mean(x)*100)
+}
+
+CV_sales <- dec_2(CV(sales))
+CV_volume <- dec_2(CV(volume))
+CV_median_price <- dec_2(CV(median_price))
+CV_listings <- dec_2(CV(listings))
+CV_months_inventory <- dec_2(CV(months_inventory))
+
+# Creation of a matrix of variation indexes
+
+matrix_var_index <- matrix(c(IQR_sales, IQR_volume, IQR_median_price, IQR_listings, IQR_months_inventory, sd_sales, sd_volume, sd_median_price, sd_listings, sd_months_inventory, CV_sales, CV_volume, CV_median_price, CV_listings, CV_months_inventory), nrow = 5, ncol = 3, byrow=F)
+
+datatable(matrix_var_index, 
+  colnames = c("IQR", "sd", "CV"),
+  rownames = c("sales", "volume", "median_price", "listings", "months_inventory")
+)
+```
+
+The variable with higher variability (CV value) is volume, equals to nearly 54%: it means that the standard deviation is around 54% with respect to the mean ; while the variable with lower variability is the median_price, with a value of 17%. 
+
+
+#### Shape indexes
+
+Kurtosis and skewness coefficients are calculated with ad hoc functions from moments package. </br> 
+Data are presented on a recapitulative table.
+
+```{r}
+library(moments)
+
+skew_sales <- dec_2(skewness(sales))
+skew_volume <- dec_2(skewness(volume))
+skew_median_price <- dec_2(skewness(median_price))
+skew_listings <- dec_2(skewness(listings))
+skew_months_inventory <- dec_2(skewness(months_inventory))
+
+kurt_sales <- dec_2(kurtosis(sales)-3)
+kurt_volume <- dec_2(kurtosis(volume)-3)
+kurt_median_price <- dec_2(kurtosis(median_price)-3)
+kurt_listings <- dec_2(kurtosis(listings)-3)
+kurt_months_inventory <- dec_2(kurtosis(months_inventory)-3)
+
+# Creation of a matrix of shape indexes
+
+matrix_sh_index <- matrix(c(skew_sales, skew_volume, skew_median_price, skew_listings, skew_months_inventory, kurt_sales, kurt_volume, kurt_median_price, kurt_listings, kurt_months_inventory), nrow = 5, ncol = 2, byrow=F)
+
+datatable(matrix_sh_index, 
+  colnames = c("skewness", "kurtosis"),
+  rownames = c("sales", "volume", "median_price", "listings", "months_inventory")
+)
+```
+
+We note that all variables except median_price present positive skewness values ; it means that the distribution curve has a bell shape shifted towards lower values. <br/>
+Kurtosis coefficients are nearly all negative: sign of platykurtic behaviour. <br/>
+It is northy to note that variable month_inventory presents a distribution close to a normal one, with Fisher skewness index close to 0 and kurtosis as well.  
+
+
+## 3. Higher variability and skewness
+
+Variable volume is the one with highest variability (CV around 54%) and with the skewest distribution (0.88). <br/>
+
+The high CV data means that the monthly volume, in million dollars, is a very irregular data. It can depends on the month, on the year period, but most probably it depends on the city.<br/>
+
+The important skewness value indicates that the main part of monthly volume data is located around low values, while the right tail is sparsely populated: few months present a very high volume. 
+
+
+## 4. Class creation for a quantitative variable
+
+We choose the sales variable to be split in different classes. </br>
+Considering min and max values of sales (risp. 79 and 423), we proceed to the class division and then to the frequency distribution.
+
+```{r}
+sales_cl <- cut(sales, breaks = c(0, 100, 200, 300, 400, 500))
+N <- dim(data)[1]
+
+ni <- table(sales_cl)
+fi <- table(sales_cl)/N
+Ni <- cumsum(ni)
+Fi <- Ni/N
+
+distr_sales_cl <- as.data.frame(cbind(ni, fi, Ni, Fi))
+print(distr_sales_cl)
+```
+
+Plot of absolute frequencies with a bar plot:
+
+```{r}
+library(ggplot2)
+
+ggplot(data)+
+  geom_bar(aes(x=sales_cl),
+           stat="count", 
+           col = "black",
+           fill = "lightblue")+
+  labs(title = "Distribution of sales in classes",
+       x = "Sales in classes",
+       y = "Absolute frequencies")+
+  scale_y_continuous(breaks=seq(0,140,20))+
+  theme_classic()
+```
+
+The most populated class is the (100,200] one. It is the modal class. </br>
+
+Gini coefficient:
+
+```{r}
+gini.index <- function(x){
+  ni = table(x)
+  fi = ni/length(x)
+  fi2 = fi^2
+  J=length(ni)
+  gini=1-sum(fi2)
+  gini.norm=gini/((J-1)/J)
+  return(gini.norm)
+}
+
+print(gini.index(sales_cl))
+```
+
+Considering the variable sales divided in classes, the Gini coefficient is equal to 0.78. </br>
+A value of 0 being the extreme case in which all statistic units are present in an only one class, and a value of 1 being the perfect heterogeneous distribution between all classes, it appears that variable sales adopts an in-between behaviour, as it is visible in the sales_cl bar plot.
+
+
+## 5. Probability considerations
+
+The dataset is composed of 240 observations, divided in 4 cities, and for each city we have the data of each month for a total of 5 years.
+
+The probability calculations requested are done using the classic definition:
+
+$P = Number\:of\:favorable\:cases\:/\:Number\:of\:total\:cases$
+
+Probability that a random row from the dataset corresponds to "Beaumont" city?
+
+$P = 1/4 = 0.25$
+
+Probability that a random row from the dataset corresponds to month of July?
+
+$P = 1/12 = 0.083$
+
+Probability that a random row from the dataset corresponds to month of December 2012?
+
+$P = 1/(5*12) = 1/60 = 0.017$
+
+
+## 6. Creation of new variables 
+
+### New column with mean price of real estates
+
+```{r}
+data$mean_price <- data$volume*1000000/data$sales
+summary(data$mean_price)
+```
+The real estate sold mean price is 154 320 dollars, with a wide range from 97 010 dollars to 213 234 dollars. Median and mean values are similar: we can suppose there are no, or few, outliers. 
+
+### New column to highlight listings efficacy 
+
+To measure the listings efficacy, we can consider the number of sales divided by the listings number of the month, in percent. It corresponds to the number of sales for 100 active listings.
+
+$ Efficacy = sales / listings *100$
+
+```{r}
+data$efficacy <- data$sales*100/data$listings
+summary(data$efficacy)
+```
+
+There is a mean efficacy value of 11.9%, for a maximum of 38.7% and a minimum of 5.0%.
+So this is a very variable data.
+
+```{r}
+CV(data$efficacy)
+```
+
+In fact, a variation coefficient CV of 39% is clearly high.
+It would be interesting to understand if it depends on the city.
+
+
+## 7. Conditional analysis on created variable efficacy
+
+### By city
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+
+by_city <- data %>%
+  group_by(city)%>%
+  summarise(mean_efficacy=mean(efficacy),
+            dev.std_efficacy=sd(efficacy))
+print(by_city)
+```
+
+Plot of the calculated data
+
+```{r}
+ggplot(by_city, aes(x=city, y=mean_efficacy))+
+  geom_col(fill="lightpink", col="black")+
+  geom_errorbar(aes(ymin=mean_efficacy-dev.std_efficacy, 
+                    ymax=mean_efficacy+dev.std_efficacy), 
+                width=.1)+
+  labs(title="Listings efficacy vs city",
+       x="City",
+       y="Efficacy, in %")+
+  theme_classic()
+```
+
+On this plot, Beaumont, Tyler and Wichita Falls cities present similar data, whereas Bryan-College Station exhibits higher mean of listings efficacy, with higher standard deviation. So, listings are more efficient for Bryan-College Station, but with higher monthly variability.
+
+It is interesting to investigate in this direction, trying to understand the heterogeneity data with respect of year or month.
+
+### By year
+
+```{r}
+by_year <- data %>%
+  group_by(year)%>%
+  summarise(mean_efficacy_y=mean(efficacy),
+            dev.std_efficacy_y=sd(efficacy))
+print(by_year)
+```
+
+Plot of the calculated data
+
+```{r}
+ggplot(by_year, aes(x=year, y=mean_efficacy_y))+
+  geom_col(fill="lightblue", col="black")+
+  geom_errorbar(aes(ymin=mean_efficacy_y-dev.std_efficacy_y, 
+                    ymax=mean_efficacy_y+dev.std_efficacy_y), 
+                width=.1)+
+  labs(title="Listings efficacy vs year",
+       x="Year",
+       y="Efficacy, in %")+
+  theme_classic()
+```
+
+This plots shows that monthly efficacy continuously increases from the 2010-2011 plateau untill 2014. But increasing efficacy value, also standard deviation increases, revealing high difference from month to month.
+
+### By month
+
+```{r}
+by_month <- data %>%
+  group_by(month)%>%
+  summarise(mean_efficacy_m=mean(efficacy),
+            dev.std_efficacy_m=sd(efficacy))
+print(by_month)
+```
+
+Plot of the calculated data
+
+```{r}
+ggplot(by_month, aes(x=month, y=mean_efficacy_m))+
+  geom_col(fill="lightgreen", col="black")+
+  geom_errorbar(aes(ymin=mean_efficacy_m-dev.std_efficacy_m, 
+                    ymax=mean_efficacy_m+dev.std_efficacy_m), 
+                width=.1)+
+  labs(title="Listings efficacy vs month",
+       x="Month",
+       y="Efficacy, in %")+
+  scale_x_continuous(breaks = seq(0,12,1))+
+  theme_classic()
+```
+
+This plot helps to understand the data heterogeneity observed on the annual data: the listings efficiency is higher during the 6 months from spring to autumn, and lower during winter time. 
+
+A deeper analysis considering separately cities and listings efficacy month by month needs to be driven (see point 8).
+
+
+## 8. Use of ggplot2
+
+### Boxplot to compare median_price between cities 
+
+In order to better appreciate median price distribution, we use gghalves package to plot half boxplot half density.
+
+```{r}
+library(gghalves)
+
+ggplot(data)+
+  geom_half_boxplot(aes(x=city, y=median_price), side = "l", fill="lightblue")+
+  geom_half_violin(aes(x=city, y=median_price), side = "r", fill="white")+
+  labs(title="Median price for each city",
+       y="Median price, in $",
+       x=" ")+
+  theme_minimal()
+```
+
+Real estate market shows a high differences in these 4 cities. From lower to higher median of the variable, there is for first Wichita Falls whose distribution presents low skewness shape ; then there are Beaumont and Tyler, still with low skewness. Finally, in Bryan-College Station we observe the highest median value of median price with a more pronounced positive skewness. That means there is, in this city, some luxury market. 
+
+
+### Boxplot to compare volume of sales between cities in the different years
+
+```{r}
+ggplot(data)+
+  geom_boxplot(aes(x=city, y=volume, fill=factor(year)))+
+  labs(title="Total sales value for each city in the 2010-2014 period",
+       y="Total sales value, in millions of $",
+       x=" ")+
+  scale_fill_manual("Year",values=c("coral1","cyan4", "plum2", "mediumspringgreen", "paleturquoise"))+
+  theme_minimal()
+```
+
+Wichita Falls in 2011 experimented a decrease of sales, then next years the real estate market even if it countinously increased, didn't succeed to reach the 2010 results. </br>
+On the other hand, Beaumont and Bryan-College Station show comparable behaviour: similar 2010 and 2011 data, then a clear jump (in 2013 for Beaumont, in both 2012 and 2013 for Bryan-College Station), and finally a plateau in 2014. </br>
+Tyler is the one with the most regular trend: a constant increase each year in this 5 years period.
+
+
+### Line chart of sales to compare cities and periods 
+
+```{r message=FALSE, warning=FALSE}
+library(zoo)
+ data$date <- as.yearmon(paste(data$year, data$month), "%Y %m")
+
+ggplot(data)+
+  geom_line(aes(x=date, y=sales, col=city))+
+  labs(title="Number of sales in the different cities in period 2010-2014",
+       x="Time",
+       y="Number of sales")+
+  theme_minimal()
+```
+
+Here we can appreciate the trend month by month of the total number of sales. Generally, we observe that monthly variations in terms of jumps and collapses are often similar in the 4 cities: example of December 2010, there are positive peaks for all cities. 
+</br>
+It is surprising to see that the total sales value gap between cities gets different in central months of the year vs winter time: Bryan-College Station and Beaumont have absolute similar sales data around January, the less productive period, while the variable increases much more for Bryan-College Station around July. On the other hand, Bryan-College Station and Tyler present comparable data in the most fruitful period in summer time, but Bryan-College Station decreases much more in winter. 
+
+
+### Bar plot (stacked and normalized) to compare total of sales for the different months, per city  
+
+```{r}
+ggplot(data, aes(x=factor(month), y=volume, fill=city))+
+  geom_bar(stat="identity", position="stack")+
+  labs(title="Sales value in the different cities per month, in million of dollars",
+       x="Month",
+       y="Total sales value, in millions of $")+
+  theme_minimal()
+```
+
+For Wichita Falls and Beaumont, there is a restrained variation of total salues valueduring summer months; while this difference is more marked for Tyler and Bryan-College Station. 
+
+
+Normalized plot
+
+```{r}
+ggplot(data, aes(x=factor(month), y=volume, fill=city))+
+  geom_bar(stat="identity", position="fill")+
+  labs(title="Sales value in the different cities per month, in million of dollars",
+       x="Month",
+       y="Total sales value, in millions of $")+
+  scale_y_continuous(breaks=seq(0,1,0.1))+
+  theme_minimal()
+```
+
+Here the interpretation is about how do the cities contribute to the total sales value, per month. As already seen, fluctuations are pretty similar (increases and decreases go in parallel for the 4 cities), as a result relative weights of each city stay stable from January to December.
+
+
+Introduction of variable year
+
+```{r}
+ggplot(data, aes(x=factor(month), y=volume, fill=city))+
+  geom_bar(stat="identity", position="stack")+
+  labs(title="Sales value in the different cities per month, in million of dollars",
+       x="Month",
+       y="Total sales value, in millions of $")+
+  facet_wrap(~year, scales ="free")+
+  ylim(0,225)+
+  theme_minimal()
+```
+
+It is visible how the total sales value considering all cities increased through years, especially in the central period around July, and mainly thanks to Bryan-College Station and Tyler contributions.
+
+
+### Listings efficacy for each city in the whole studied period
+
+It is important to evaluate the listings efficacy in time for the 4 cities.
+
+```{r}
+ggplot(data)+
+  geom_line(aes(x=date, y=efficacy, col=city))+
+  labs(title="Listings efficacy in the different cities in period 2010-2014",
+       x="Time",
+       y="Listings efficacy, %")+
+  theme_minimal()
+```
+
+This plot clearly demonstrates how listings efficacy is high in Bryan-College Station city, even if subject to important seasonal variations. Tyler and Beaumont present very similar behaviours, with light increase in time, while Wichita Falls is the only one to stay constant. 
+
+
+### Listings number for each city in the whole studied period
+
+To be able to draw conclusions, it is interesting to see the number of active listings for the whole period per city. 
+
+```{r}
+ggplot(data)+
+  geom_line(aes(x=date, y=listings, col=city))+
+  labs(title="Listings number in the different cities in period 2010-2014",
+       x="Time",
+       y="Listings numbers")+
+  theme_minimal()
+```
+
+The seasonal rythm observed so far may be due to listings trend: high in the middle of the year and lower during winter. The high listings quantity for Tyler is noteworthy: nearly twice the Beaumont quantity. The decrease of active listings for 2014 in Bryan-College is due to the very high sales number (each concluded sale leading to an active listing loss).
+
+## 9. Conclusions
+
+### Real estate market trends identification and interpretation
+
+This study is about real estate market trends on 4 different cities in Texas, during a period of 5 years (from 2010 to 2014), with monthly data. </br>
+
+General trend shows an increase of sales number and of volume as well. On the other hand the median price variation coefficient is equals to 17%, so for all cities over the years there is more an increase of sales number than an increase of real estate price. 
+
+As found using a class distribution for sales variable, there is mainly between 100 and 200 sales per month, all cities and years taken together, rarely more than 300. 
+
+Considering total sales plot per city over the years and line chart of numbers of sales, it appears that Wichita falls stay constant for both these variables, Beaumont slightly increases, and Tyler and Bryan-College Station show higher values.
+
+
+### Efficacy of marketing strategies using listings 
+
+To appreciate listings efficacy at the best, a new variable has been created, indicating how many sales have been concluded for 100 listings. This data shows a high variability, with a minimum of 5% to a maximum of 39%. 
+
+The line charts of listings efficacy per city on the 2010-2014 period highlights the special behaviour of Bryan-College Station city with very high values around July each year, increasing year after year. Then for Tyler and Beaumont there is a light and continuous increase over the years, while Wichita Falls doesn't seem to exhibit any listings efficacy improvement with time. 
+
+
+### Optimization of strategy plan, identifying cities with major growth opportunities
+
+Previous commented data highlighted the particularly growing real estate market in Bryan-College Station city, with listings efficacy close to 40% in July of 2014, and constantly increasing number of sales. Furthermore, it is the city with higher median price. It is for sure a city to invest in, there is high potential there but not enough active listings in order to exploit these opportunities. 
+
+Then, Tyler city has very high increasing sales numbers, but as the listings number is very high, listings efficacy seems to stay constant. Median price is right after the Bryan-College Station one. The real estate market strategy seems to be the good one, and already fruitful. It is a promising market on which carrying on investing.
+
+Beaumont presents an increasing number of sales, but the median price is rather low, it doesn't seem to require a special change of strategy, but investing on real estate there does not appear to be a priority. 
+
+Wichita Falls has constant statistics: constant number of sales and volume of them, quite low median price. Considering the provided data, it is clearly not a city with high real estate growing potential, it is recommanded to limit the investment there.
+
+
+
+
+
+
+
+
